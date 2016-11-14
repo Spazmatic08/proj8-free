@@ -15,7 +15,7 @@ architecture=`uname -m`
 node=`uname -n`
 processor=`uname -p`
 opsys=`uname -v`
-port="5000"   # But see how this is altered for shared server ix
+port="8000"   # But see how this is altered for shared server ix
 
 
 # Generate configuration file text with a couple of choices
@@ -79,7 +79,7 @@ elif [[ $opsys =~ "Darwin" ]]; then
 
 elif [[ $node =~ "ix" ]]; then 
    echo "Configuring for shared CIS host ix-trusty or ix-dev"
-   (( port = 1000 + ($RANDOM % 8000) ))
+   (( port = 7520 ))
    gen_makefile > ../Makefile.local
    gen_config > ../CONFIG.py
    echo "CONFIG.py uses random port ${port}; you may edit for another value"

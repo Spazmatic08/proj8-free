@@ -37,7 +37,7 @@ app.logger.setLevel(logging.DEBUG)
 app.secret_key=CONFIG.secret_key
 
 SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
-CLIENT_SECRET_FILE = secrets.admin_secrets.google_key_file  ## You'll need this
+CLIENT_SECRET_FILE = secrets.admin_secrets.google_key_file
 APPLICATION_NAME = 'MeetMe class project'
 
 #############################
@@ -48,18 +48,15 @@ APPLICATION_NAME = 'MeetMe class project'
 
 @app.route("/")
 @app.route("/index")
-def index():
-  app.logger.debug("Entering index")
-  if 'begin_date' not in flask.session:
-    init_session_values()
-  return render_template('index.html')
-
 @app.route("/choose")
 def choose():
     ## We'll need authorization to list calendars 
     ## I wanted to put what follows into a function, but had
     ## to pull it back here because the redirect has to be a
-    ## 'return' 
+    ## 'return'
+    app.logger.debug("Entering index")
+    if 'begin_date' not in flask.session:
+      init_session_values()
     app.logger.debug("Checking credentials for Google calendar access")
     credentials = valid_credentials()
     if not credentials:

@@ -197,12 +197,12 @@ def setrange():
       request.form.getlist('calselect')))
     daterange = request.form.get('daterange')
     flask.session['daterange'] = daterange
-    daterange_parts = daterange.split()
+    daterange_parts = daterange.split(" - ")
     app.logger.debug("Daterange split as {}".format(daterange_parts))
     flask.session['begin_date'] = interpret_date(daterange_parts[0])
-    flask.session['end_date'] = interpret_date(daterange_parts[4])
-    app.logger.debug("Setrange parsed {} - {}  dates as {} - {}".format(
-      daterange_parts[0], daterange_parts[4], 
+    flask.session['end_date'] = interpret_date(daterange_parts[1])
+    flask.flash("Setrange parsed {} - {}  dates as {} - {}".format(
+      daterange_parts[0], daterange_parts[1], 
       flask.session['begin_date'], flask.session['end_date']))
     return flask.redirect(flask.url_for("choose"))
 
@@ -266,7 +266,7 @@ def interpret_date( text ):
     with the local time zone.
     """
     try:
-      as_arrow = arrow.get(text, "MM/DD/YYYY").replace(
+      as_arrow = arrow.get(text, "MM/DD/YYYY h:mm A").replace(
           tzinfo=tz.tzlocal())
     except:
         flask.flash("Date '{}' didn't fit expected format 12/31/2001")

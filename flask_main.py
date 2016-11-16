@@ -193,6 +193,8 @@ def setrange():
     app.logger.debug("Entering setrange")  
     flask.flash("Setrange gave us '{}'".format(
       request.form.get('daterange')))
+    flask.flash("Selected calendars were '{}'".format(
+      request.form.getlist('calselect')))
     daterange = request.form.get('daterange')
     flask.session['daterange'] = daterange
     daterange_parts = daterange.split()

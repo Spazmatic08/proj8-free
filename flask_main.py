@@ -184,24 +184,32 @@ def oauth2callback():
 #
 #####
 
-@app.route('/setrange', methods=['POST'])
-def setrange():
+@app.route('/busytimes', methods=['POST'])
+def busytimes():
     """
-    User chose a date range with the bootstrap daterange
-    widget.
+    User chose a date range, time, and set of calendars
+    using the checkboxes and bootstrap widget. 
     """
-    app.logger.debug("Entering setrange")  
-    flask.flash("Setrange gave us '{}'".format(
+    app.logger.debug("Entering busytimes")  
+    flask.flash("Date range was '{}'".format(
       request.form.get('daterange')))
-    flask.flash("Selected calendars were '{}'".format(
+    flask.flash("Selected calendars' ids were '{}'".format(
       request.form.getlist('calselect')))
     daterange = request.form.get('daterange')
+    begin_time = request.form.get('tpBegin')
+    end_time = request.form.get('tpEnd')
+    flask.flash("Start and end times as: {} and {}".format(
+      begin_time, end_time))
+    flask.session['begin_time'] = begin_time
+    flask.session['end_time'] = end_time
+    calselect = request.form.getlist('calselect')
     flask.session['daterange'] = daterange
     daterange_parts = daterange.split(" - ")
     app.logger.debug("Daterange split as {}".format(daterange_parts))
     flask.session['begin_date'] = interpret_date(daterange_parts[0])
     flask.session['end_date'] = interpret_date(daterange_parts[1])
-    flask.flash("Setrange parsed {} - {}  dates as {} - {}".format(
+    flask.session['cal_ids'] = calselect
+    flask.flash("Busytimes parsed {} - {}  dates as {} - {}".format(
       daterange_parts[0], daterange_parts[1], 
       flask.session['begin_date'], flask.session['end_date']))
     return flask.redirect(flask.url_for("choose"))
@@ -217,18 +225,18 @@ def init_session_values():
     Start with some reasonable defaults for date and time ranges.
     Note this must be run in app context ... can't call from main. 
     """
-    # Default date span = tomorrow to 1 week from now
+    # Default date span = tomorrow to 1 week from now, 8 to 5
     now = arrow.now('local')     # We really should be using tz from browser
-    tomorrow = now.replace(days=+1)
-    nextweek = now.replace(days=+7)
+    tomorrow = now.replace(days=+1, hours=8)
+    nextweek = now.replace(days=+7, hours=17)
     flask.session["begin_date"] = tomorrow.floor('day').isoformat()
     flask.session["end_date"] = nextweek.ceil('day').isoformat()
     flask.session["daterange"] = "{} - {}".format(
-        tomorrow.format("MM/DD/YYYY"),
-        nextweek.format("MM/DD/YYYY"))
+        tomorrow.format("MM/DD/YYYY h:mm A"),
+        nextweek.format("MM/DD/YYYY h:mm A"))
     # Default time span each day, 8 to 5
-    flask.session["begin_time"] = interpret_time("9am")
-    flask.session["end_time"] = interpret_time("5pm")
+    flask.session["begin_time"] = interpret_time("8:00 AM")
+    flask.session["end_time"] = interpret_time("5:00 PM")
 
 def interpret_time( text ):
     """
@@ -266,7 +274,7 @@ def interpret_date( text ):
     with the local time zone.
     """
     try:
-      as_arrow = arrow.get(text, "MM/DD/YYYY h:mm A").replace(
+      as_arrow = arrow.get(text, "MM/DD/YYYY").replace(
           tzinfo=tz.tzlocal())
     except:
         flask.flash("Date '{}' didn't fit expected format 12/31/2001")

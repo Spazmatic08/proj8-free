@@ -29,6 +29,11 @@
 <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
 <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
 
+<!-- NoGray time picker -->
+<script type="text/javascript" src="//www.nogray.com/templates/nogray/js/ng/1.2.2/ng_lite.js"></script>
+<script type="text/javascript" src="//www.nogray.com/templates/nogray/js/ng/1.2.2/components/timepicker_lite.js"></script>
+<script type="text/javascript" src="//www.nogray.com/templates/nogray/js/ng/1.2.2/ng_ui.js"></script>
+<link rel="stylesheet" type="text/css" href="//www.nogray.com/templates/nogray/css/all.css" />
 
 </head>
 
@@ -56,19 +61,18 @@
 {% endwith %}
 
 <h2>Date range</h2>
-  <form action="/setrange" method="post">
+  <form action="/busytimes" method="post">
   <input type="text" name="daterange" size="12"
     {% if session.daterange is defined %}
          value="{{session.daterange}}"
     {% endif %}
      class="pull-down"
      style="background: #fff; cursor: pointer; padding: 5px 10px;
-     border: 1px solid #ccc; width: 24em" >
+     border: 1px solid #ccc; width: 13em" >
   <script type="text/javascript">
   $(function() {
   $('input[name="daterange"]').daterangepicker(
     {   
-	timePicker: true, 
 	ranges: {
            'Today': [moment(), moment()],
            'Tomorrow':[moment().add(1, 'days'),
@@ -80,14 +84,34 @@
            'Within two weeks':[moment(),moment().add(15, 'days')]
         }, 
 	locale: {
-	    format: 'MM/DD/YYYY h:mm A'
+	    format: 'MM/DD/YYYY'
 	}
     }
    );
   });
   </script>
 
-<br />
+<p>
+  <input type="text" name="tpBegin" id="tpBegin">
+  <input type="text" name="tpEnd" id="tpEnd">
+</p>
+
+<script type="text/javascript">
+ng.ready(function(){
+    var tpB = new ng.TimePicker({
+	input: 'tpBegin', 
+	format: 'h:i A',
+	server_format: 'h:i A',
+	value: '{{ session.begin_time }}'
+    });
+    var tpE = new ng.TimePicker({
+	input: 'tpEnd', 
+	format: 'h:i A',
+	server_format: 'h:i A',
+	value: '{{ session.end_time }}'
+    });
+});
+</script>
 
     <!--
     Show the calendar list (if we have it).  This will need to be turned into
@@ -102,8 +126,8 @@
 	    <label>
 	      <input type="checkbox" 
 	      name="calselect" 
-	      value="{{ cal.summary }}"
-	      checked="true">
+	      value="{{ cal.id }}"
+	      checked="{{ cal.selected }}">
 	      {{ cal.summary }}
 	    </label>
           </div>
@@ -111,8 +135,10 @@
           </div> <div class="col-md-4">
          {% endif %}
   {% endfor %}
-  <input type="submit" value="Choose" />
   </div>
+<div style="clear: left">
+  <input type="submit" value="Choose" />
+</div>
 {% endif %}
 </form>
 

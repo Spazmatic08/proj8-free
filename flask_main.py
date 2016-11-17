@@ -26,10 +26,6 @@ from apiclient import discovery
 import CONFIG
 import secrets.admin_secrets  # Per-machine secrets
 import secrets.client_secrets # Per-application secrets
-#  Note to CIS 322 students:  client_secrets is what you turn in.
-#     You need an admin_secrets, but the grader and I don't use yours. 
-#     We use our own admin_secrets file along with your client_secrets
-#     file on our Raspberry Pis. 
 
 app = flask.Flask(__name__)
 app.debug=CONFIG.DEBUG
@@ -326,11 +322,6 @@ def daily_ranges():
                     begin_time.split(":")]
     end_offset = [int(n) for n in
                   end_time.split(":")]
-##    # Make sure we add 12 hours to a PM hour, except for 12 PM
-##    if begin_time[-2:] == "PM" and begin_time[:2] != "12":
-##      begin_offset[0] += 12
-##    if end_time[-2:] == "PM" and end_time[:2] != "12":
-##      end_offset[0] += 12
     result = [ ]
     for date in arrow.Arrow.range('day', begin_date, end_date):
       day_start = date.replace(hours=+begin_offset[0], minutes=+begin_offset[1])

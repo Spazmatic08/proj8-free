@@ -228,8 +228,8 @@ def init_session_values():
         tomorrow.format("MM/DD/YYYY h:mm A"),
         nextweek.format("MM/DD/YYYY h:mm A"))
     # Default time span each day, 8 to 5
-    flask.session["begin_time"] = "8:00 AM"
-    flask.session["end_time"] = "5:00 PM"
+    flask.session["begin_time"] = "8:00"
+    flask.session["end_time"] = "17:00"
 
 def interpret_time( text ):
     """
@@ -323,20 +323,19 @@ def daily_ranges():
     end_time = flask.session['end_time']
     # Hour and minute offsets in [0] and [1], respectively
     begin_offset = [int(n) for n in
-                    begin_time.split()[0].split(":")]
+                    begin_time.split(":")]
     end_offset = [int(n) for n in
-                  end_time.split()[0].split(":")]
-    # Make sure we add 12 hours to a PM hour, except for 12 PM
-    if begin_time[-2:] == "PM" and begin_time[:2] != "12":
-      begin_offset[0] += 12
-    if end_time[-2:] == "PM" and end_time[:2] != "12":
-      end_offset[0] += 12
+                  end_time.split(":")]
+##    # Make sure we add 12 hours to a PM hour, except for 12 PM
+##    if begin_time[-2:] == "PM" and begin_time[:2] != "12":
+##      begin_offset[0] += 12
+##    if end_time[-2:] == "PM" and end_time[:2] != "12":
+##      end_offset[0] += 12
     result = [ ]
     for date in arrow.Arrow.range('day', begin_date, end_date):
       day_start = date.replace(hours=+begin_offset[0], minutes=+begin_offset[1])
       day_end = date.replace(hours=+end_offset[0], minutes=+end_offset[1])
       result.append(tuple([day_start, day_end]))
-
     return result
   
 def list_calendars(service):
@@ -407,8 +406,8 @@ def format_arrow_date( date ):
 @app.template_filter( 'fmttime' )
 def format_arrow_time( time ):
     try:
-        normal = arrow.get( time )
-        return normal.format("HH:mm")
+        normal = arrow.get( time ).to('local')
+        return normal.format("hh:mm A")
     except:
         return "(bad time)"
     

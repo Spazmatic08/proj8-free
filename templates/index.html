@@ -41,8 +41,6 @@
 <div class="container">
 
 <h1>Busy Times</h1>
-{% if session.busy is defined %}
-{% endif %}
 
 <!--
   -- If there are any warnings or other messages from a prior action,
@@ -60,15 +58,18 @@
   {% endif %}
 {% endwith %}
 
-{% if session['busy'][0] is defined %}
-   <p>Found busy times:</p>
-   <ul>
-   {% for busy in session['busy'] %}
-     <li>{{ busy['start'] }} to {{ busy['end'] }}</li>
-   {% endfor %}
-   </ul>
-{% else %}
-   <p>The schedule seems clear!</p>
+{% if session['busy'] is defined %}
+  {% if session['busy'][0] is defined %}
+     <p>Found busy times:</p>
+     <ul>
+     {% for busy in session['busy'] %}
+       <li>{{ busy['start'] | fmtdate }}, {{ busy['start'] | fmttime }} to 
+	   {{ busy['end'] | fmtdate }}, {{ busy['end'] | fmttime }}</li>
+     {% endfor %}
+     </ul>
+  {% else %}
+     <p>The schedule seems clear!</p>
+  {% endif %}
 {% endif %}
 
 <h2>Date range</h2>
@@ -112,13 +113,13 @@ ng.ready(function(){
     var tpB = new ng.TimePicker({
 	input: 'tpBegin', 
 	format: 'h:i A',
-	server_format: 'h:i A',
+	server_format: 'H:i',
 	value: '{{ session.begin_time }}'
     });
     var tpE = new ng.TimePicker({
 	input: 'tpEnd', 
 	format: 'h:i A',
-	server_format: 'h:i A',
+	server_format: 'H:i',
 	value: '{{ session.end_time }}'
     });
 });

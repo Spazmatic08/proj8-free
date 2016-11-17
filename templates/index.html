@@ -60,6 +60,10 @@
   {% endif %}
 {% endwith %}
 
+{% if session.busy is defined %}
+<p>Found busy times</p>
+{% endif %}
+
 <h2>Date range</h2>
   <form action="/busytimes" method="post">
   <input type="text" name="daterange" size="12"
@@ -92,8 +96,8 @@
   </script>
 
 <p>
-  <input type="text" name="tpBegin" id="tpBegin">
-  <input type="text" name="tpEnd" id="tpEnd">
+  From <input type="text" name="tpBegin" id="tpBegin"> 
+  to <input type="text" name="tpEnd" id="tpEnd">
 </p>
 
 <script type="text/javascript">
@@ -127,7 +131,7 @@ ng.ready(function(){
 	      <input type="checkbox" 
 	      name="calselect" 
 	      value="{{ cal.id }}"
-	      checked="{{ cal.selected }}">
+	      checked="True">
 	      {{ cal.summary }}
 	    </label>
           </div>

@@ -66,6 +66,9 @@ def choose():
     gcal_service = get_gcal_service(credentials)
     app.logger.debug("Returned from get_gcal_service")
     flask.g.calendars = list_calendars(gcal_service)
+    if 'cal_ids' in flask.session:
+      flask.session['busy'] = list_busy(gcal_service)
+    
     return render_template('index.html')
 
 ####
@@ -187,31 +190,21 @@ def oauth2callback():
 @app.route('/busytimes', methods=['POST'])
 def busytimes():
     """
-    User chose a date range, time, and set of calendars
-    using the checkboxes and bootstrap widget. 
+    User chose a date range, time range, and set of calendars
+    using the checkboxes and widgets. 
     """
-    app.logger.debug("Entering busytimes")  
-    flask.flash("Date range was '{}'".format(
-      request.form.get('daterange')))
-    flask.flash("Selected calendars' ids were '{}'".format(
-      request.form.getlist('calselect')))
+    app.logger.debug("Entering busytimes")
     daterange = request.form.get('daterange')
     begin_time = request.form.get('tpBegin')
     end_time = request.form.get('tpEnd')
-    flask.flash("Start and end times as: {} and {}".format(
-      begin_time, end_time))
     flask.session['begin_time'] = begin_time
     flask.session['end_time'] = end_time
     calselect = request.form.getlist('calselect')
     flask.session['daterange'] = daterange
     daterange_parts = daterange.split(" - ")
-    app.logger.debug("Daterange split as {}".format(daterange_parts))
     flask.session['begin_date'] = interpret_date(daterange_parts[0])
     flask.session['end_date'] = interpret_date(daterange_parts[1])
     flask.session['cal_ids'] = calselect
-    flask.flash("Busytimes parsed {} - {}  dates as {} - {}".format(
-      daterange_parts[0], daterange_parts[1], 
-      flask.session['begin_date'], flask.session['end_date']))
     return flask.redirect(flask.url_for("choose"))
 
 ####
@@ -235,8 +228,8 @@ def init_session_values():
         tomorrow.format("MM/DD/YYYY h:mm A"),
         nextweek.format("MM/DD/YYYY h:mm A"))
     # Default time span each day, 8 to 5
-    flask.session["begin_time"] = interpret_time("8:00 AM")
-    flask.session["end_time"] = interpret_time("5:00 PM")
+    flask.session["begin_time"] = "8:00 AM"
+    flask.session["end_time"] = "5:00 PM"
 
 def interpret_time( text ):
     """
@@ -293,6 +286,58 @@ def next_day(isotext):
 #  Functions (NOT pages) that return some information
 #
 ####
+
+def list_busy(service):
+    """
+    Given a google 'service' object, return a list of
+    busy times based on the current session variables.
+    """
+    app.logger.debug("Entering list_busy")
+    day_ranges = daily_ranges()
+    ids = [{"id": cal_id} for cal_id in flask.session['cal_ids']]
+    busy = [ ]
+    for times in day_ranges:
+      open_time = times[0].isoformat()
+      close_time = times[1].isoformat()
+      fbquery = { "timeMin": open_time,
+                  "timeMax": close_time,
+                  "items": ids}
+      response = service.freebusy().query(body=fbquery).execute()
+      for b in response['calendars'].values():
+        busy.append(b['busy'])
+
+    # Flatten the results
+    busy = [time for sublist in busy for time in sublist]
+    return(busy)
+
+def daily_ranges():
+    """
+    Returns a sequence of date and time ranges as a list of tuples
+    based on the contents of the session variables for use in determining
+    busy times.
+    """
+    app.logger.debug("Entering daily_ranges")
+    begin_date = arrow.get(flask.session['begin_date'])
+    end_date = arrow.get(flask.session['end_date'])
+    begin_time = flask.session['begin_time']
+    end_time = flask.session['end_time']
+    # Hour and minute offsets in [0] and [1], respectively
+    begin_offset = [int(n) for n in
+                    begin_time.split()[0].split(":")]
+    end_offset = [int(n) for n in
+                  end_time.split()[0].split(":")]
+    # Make sure we add 12 hours to a PM hour, except for 12 PM
+    if begin_time[-2:] == "PM" and begin_time[:2] != "12":
+      begin_offset[0] += 12
+    if end_time[-2:] == "PM" and end_time[:2] != "12":
+      end_offset[0] += 12
+    result = [ ]
+    for date in arrow.Arrow.range('day', begin_date, end_date):
+      day_start = date.replace(hours=+begin_offset[0], minutes=+begin_offset[1])
+      day_end = date.replace(hours=+end_offset[0], minutes=+end_offset[1])
+      result.append(tuple([day_start, day_end]))
+
+    return result
   
 def list_calendars(service):
     """

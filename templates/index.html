@@ -54,14 +54,21 @@
   {% if messages %}
     <ul class=flashes>
     {% for message in messages %}
-      <li>{{ message }}</li>
+      <li style="color: red">NOTE: {{ message }}</li>
     {% endfor %}
     </ul>
   {% endif %}
 {% endwith %}
 
-{% if session.busy is defined %}
-<p>Found busy times</p>
+{% if session['busy'][0] is defined %}
+   <p>Found busy times:</p>
+   <ul>
+   {% for busy in session['busy'] %}
+     <li>{{ busy['start'] }} to {{ busy['end'] }}</li>
+   {% endfor %}
+   </ul>
+{% else %}
+   <p>The schedule seems clear!</p>
 {% endif %}
 
 <h2>Date range</h2>

@@ -15,7 +15,7 @@ the program with the following commands:
 Alternatively, you should be able to deploy through gunicorn by using 
 'make service' instead.
 
-The server runs on port 8000 under most circumstances (if deploying on the UO's
+The server runs on port 5000 under most circumstances (if deploying on the UO's
 ix server, it tries to run on port 7520). You will need to provide the necessary
 secrets files yourself - it uses oauth2 and the Google calendars API. 
 

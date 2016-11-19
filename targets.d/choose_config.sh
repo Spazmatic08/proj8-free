@@ -15,7 +15,7 @@ architecture=`uname -m`
 node=`uname -n`
 processor=`uname -p`
 opsys=`uname -v`
-port="8000"   # But see how this is altered for shared server ix
+port="5000"   # But see how this is altered for shared server ix
 
 
 # Generate configuration file text with a couple of choices

@@ -63,8 +63,7 @@ def choose():
     app.logger.debug("Returned from get_gcal_service")
     flask.g.calendars = list_calendars(gcal_service)
     if 'cal_ids' in flask.session:
-      flask.session['busy'] = list_busy(gcal_service)
-    
+      set_freebusy(gcal_service)
     return render_template('index.html')
 
 ####
@@ -283,28 +282,56 @@ def next_day(isotext):
 #
 ####
 
-def list_busy(service):
+def set_freebusy(service):
     """
-    Given a google 'service' object, return a list of
-    busy times based on the current session variables.
+    Given a google 'service' object, sets the session variable 'busy' to
+    reflect when the queried individual is busy.
     """
     app.logger.debug("Entering list_busy")
     day_ranges = daily_ranges()
     ids = [{"id": cal_id} for cal_id in flask.session['cal_ids']]
     busy = [ ]
+    avbl = [ ]
     for times in day_ranges:
+      flask.flash(times)
       open_time = times[0].isoformat()
       close_time = times[1].isoformat()
       fbquery = { "timeMin": open_time,
                   "timeMax": close_time,
-                  "items": ids}
+                  "items": ids, 
+                  "timezone": '-0800' } # Replace w/ browser tz
       response = service.freebusy().query(body=fbquery).execute()
+      busy_that_day = [ ]
       for b in response['calendars'].values():
-        busy.append(b['busy'])
+        busy_that_day.extend(b['busy'])
+      busy.extend(busy_that_day)
+      dearrowed_times = [{'start': times[0].format("YYYY-MM-DDTHH:mm:ssZ"), 
+                         'end': times[1].format("YYYY-MM-DDTHH:mm:ssZ")}]
+      avbl.extend(break_day(dearrowed_times, busy_that_day))
 
-    # Flatten the results
-    busy = [time for sublist in busy for time in sublist]
-    return(busy)
+    flask.session['busy'] = busy
+    flask.session['avbl'] = avbl
+
+def break_day(dayrange, interrupts):
+    """
+    Breaks up a pair of start-end times into a list of start-end times
+    with the interrupt times removed from the range's time span. End result
+    is a list of 2 arrow lists containing the windows of time that are
+    available.
+    """
+    result = dayrange
+    app.logger.debug("Dayrange was {}".format(dayrange))
+    for i in interrupts:
+        scrutiny = result[-1]
+        i_start = i['start']
+        i_end = i['end']
+        app.logger.debug("Scrutiny is {}".format(scrutiny))
+        del result[-1]
+        if (scrutiny['start'] != i_start):
+            result.append({'start': scrutiny['start'], 'end': i_start})
+        if (scrutiny['end'] != i_end):
+            result.append({'start': i_end, 'end': scrutiny['end']})
+    return result
 
 def daily_ranges():
     """
@@ -326,7 +353,7 @@ def daily_ranges():
     for date in arrow.Arrow.range('day', begin_date, end_date):
       day_start = date.replace(hours=+begin_offset[0], minutes=+begin_offset[1])
       day_end = date.replace(hours=+end_offset[0], minutes=+end_offset[1])
-      result.append(tuple([day_start, day_end]))
+      result.append([day_start, day_end])
     return result
   
 def list_calendars(service):

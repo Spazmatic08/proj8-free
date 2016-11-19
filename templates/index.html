@@ -64,11 +64,23 @@
      <ul>
      {% for busy in session['busy'] %}
        <li>{{ busy['start'] | fmtdate }}, {{ busy['start'] | fmttime }} to 
-	   {{ busy['end'] | fmtdate }}, {{ busy['end'] | fmttime }}</li>
+	   {{ busy['end'] | fmttime }}</li>
      {% endfor %}
      </ul>
   {% else %}
      <p>The schedule seems clear!</p>
+  {% endif %}
+{% endif %}
+
+{% if session['avbl'] is defined %}
+  {% if session['avbl'][0] is defined %}
+     <p>Found available times:</p>
+     <ul>
+     {% for avbl in session['avbl'] %}
+       <li>{{ avbl['start'] | fmtdate }}, {{ avbl['start'] | fmttime }} to 
+       {{ avbl['end'] | fmttime }}</li>
+     {% endfor %}
+     </ul>
   {% endif %}
 {% endif %}
 
